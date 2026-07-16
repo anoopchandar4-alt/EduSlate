@@ -1,0 +1,252 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>EduSlate — Crocodile Lake Map</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@500;600;700&family=Nunito:wght@600;700;800&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --sky-top:#BFE9FF; --sky-bottom:#6FC3E8; --lake-deep:#2E86AB; --lake-shallow:#5FB8D9;
+    --lily:#4E9F6E; --lily-dark:#3C7D55; --stone-gold:#F0B94A; --stone-gold-dark:#C99229;
+    --coral:#FF6F59; --coral-dark:#E85A45; --navy:#123847; --navy-soft:#1B4A5C;
+    --cream:#FFF8ED; --locked-grey:#93A6AC;
+  }
+  *{box-sizing:border-box;}
+  body{
+    margin:0; min-height:100vh; font-family:'Nunito', sans-serif;
+    background:linear-gradient(180deg, var(--sky-top) 0%, var(--sky-bottom) 55%, var(--lake-deep) 100%);
+    overflow-x:hidden; color:var(--navy);
+  }
+  h1, h2, .display{ font-family:'Fredoka', sans-serif; }
+
+  .dashboard{
+    position:sticky; top:0; z-index:50; display:flex; align-items:center;
+    justify-content:space-between; gap:16px; padding:14px 22px;
+    background:var(--navy); box-shadow:0 6px 20px rgba(18,56,71,0.35);
+  }
+  .dashboard .brand{ display:flex; align-items:center; gap:10px; color:var(--cream); font-size:1.25rem; font-weight:600; }
+  .dashboard .brand .logo-dot{ width:14px;height:14px;border-radius:50%; background:var(--coral); box-shadow:0 0 0 4px rgba(255,111,89,0.25); }
+  .dashboard .progress-wrap{ flex:1; max-width:340px; display:flex; align-items:center; gap:10px; }
+  .dashboard .progress-track{ flex:1; height:10px; border-radius:999px; background:rgba(255,255,255,0.15); overflow:hidden; }
+  .dashboard .progress-fill{ height:100%; border-radius:999px; background:linear-gradient(90deg, var(--stone-gold), var(--coral)); transition:width 0.6s ease; }
+  .dashboard .progress-label{ color:var(--cream); font-size:0.85rem; font-weight:700; white-space:nowrap; }
+  .dashboard .avatar-badge{ display:flex; align-items:center; gap:10px; background:rgba(255,255,255,0.08); padding:6px 14px 6px 6px; border-radius:999px; }
+  .dashboard .avatar-badge .emoji{ width:34px;height:34px; border-radius:50%; background:var(--stone-gold); display:flex;align-items:center;justify-content:center; font-size:1.1rem; }
+  .dashboard .avatar-badge span{ color:var(--cream); font-weight:700; font-size:0.9rem; }
+
+  .btn{
+    font-family:'Fredoka', sans-serif; font-weight:600; font-size:0.95rem; padding:10px 22px;
+    border-radius:999px; border:none; cursor:pointer; color:var(--cream); background:var(--coral);
+    box-shadow:0 4px 0 var(--coral-dark); transition:transform 0.12s ease, box-shadow 0.12s ease;
+  }
+  .btn:hover{ transform:translateY(-2px); box-shadow:0 6px 0 var(--coral-dark); }
+  .btn:active{ transform:translateY(2px); box-shadow:0 2px 0 var(--coral-dark); }
+  .btn.ghost{ background:transparent; border:2px solid rgba(255,248,237,0.5); box-shadow:none; color:var(--navy); }
+  .btn.ghost:hover{ box-shadow:none; background:rgba(255,255,255,0.3); }
+  .btn.active{ background:var(--navy); box-shadow:0 4px 0 #081F28; }
+
+  .grade-tabs{ display:flex; gap:10px; justify-content:center; padding:18px 20px 0; }
+
+  .hero{ text-align:center; padding:14px 20px 8px; }
+  .hero h1{ margin:0; font-size:clamp(1.6rem, 4vw, 2.4rem); color:var(--navy); text-shadow:0 2px 0 rgba(255,255,255,0.5); }
+  .hero p{ margin:6px 0 0; font-weight:700; color:var(--navy-soft); }
+
+  .lake-scene{ position:relative; width:100%; max-width:1100px; margin:20px auto 60px; padding:60px 20px 100px; }
+
+  .path-row{ position:relative; display:flex; flex-wrap:wrap; justify-content:space-between; align-items:flex-end; gap:20px; }
+  .stone-wrap{ position:relative; display:flex; flex-direction:column; align-items:center; width:150px; }
+  .stone-wrap:nth-child(2){ transform:translateY(38px); }
+  .stone-wrap:nth-child(3){ transform:translateY(-10px); }
+  .stone-wrap:nth-child(4){ transform:translateY(46px); }
+  .stone-wrap:nth-child(5){ transform:translateY(4px); }
+
+  .ripple-ring{
+    position:absolute; top:50%; left:50%; width:100px; height:100px; border-radius:50%;
+    border:3px solid rgba(255,255,255,0.55); transform:translate(-50%,-50%) scale(0.6); opacity:0; pointer-events:none;
+  }
+  .stone.unlocked .ripple-ring{ animation:rippleOut 3.2s ease-out infinite; }
+  .stone.unlocked .ripple-ring.delay{ animation-delay:1.6s; }
+  @keyframes rippleOut{
+    0%{ transform:translate(-50%,-50%) scale(0.55); opacity:0.6; }
+    70%{ opacity:0.15; }
+    100%{ transform:translate(-50%,-50%) scale(1.5); opacity:0; }
+  }
+
+  .stone{
+    position:relative; width:96px; height:96px; border-radius:50%; display:flex; align-items:center;
+    justify-content:center; font-family:'Fredoka', sans-serif; font-weight:700; font-size:1.5rem; color:var(--navy);
+    background:radial-gradient(circle at 32% 28%, #FFE6A8, var(--stone-gold) 55%, var(--stone-gold-dark));
+    box-shadow:0 10px 0 rgba(18,56,71,0.25), 0 14px 18px rgba(18,56,71,0.25); cursor:pointer;
+    transition:transform 0.2s ease, filter 0.2s ease; border:4px solid rgba(255,255,255,0.35);
+    animation:idleBob 3.6s ease-in-out infinite;
+  }
+  .stone-wrap:nth-child(odd) .stone{ animation-delay:0s; }
+  .stone-wrap:nth-child(even) .stone{ animation-delay:1.1s; }
+  @keyframes idleBob{ 0%,100%{ transform:translateY(0); } 50%{ transform:translateY(-6px); } }
+  .stone.unlocked:hover{ transform:scale(1.08) translateY(-4px); filter:brightness(1.05); }
+  .stone.locked{
+    background:radial-gradient(circle at 32% 28%, #C4D0D4, var(--locked-grey) 60%, #7C8C92);
+    color:#4B5B60; cursor:not-allowed; box-shadow:0 8px 0 rgba(60,70,74,0.3); animation:none;
+  }
+  .stone.locked .lock-icon{ font-size:1.6rem; }
+  .stone.current{ box-shadow:0 10px 0 rgba(18,56,71,0.25), 0 0 0 6px rgba(255,111,89,0.45), 0 14px 22px rgba(18,56,71,0.3); }
+
+  .stone-label{
+    margin-top:10px; font-weight:800; font-size:0.78rem; color:var(--navy);
+    background:rgba(255,255,255,0.75); padding:4px 10px; border-radius:999px; text-align:center; max-width:140px;
+  }
+
+  .character{
+    position:absolute; top:-46px; left:50%; transform:translateX(-50%); font-size:2.2rem;
+    animation:charBob 2.2s ease-in-out infinite; filter:drop-shadow(0 6px 4px rgba(0,0,0,0.25));
+  }
+  @keyframes charBob{
+    0%,100%{ transform:translateX(-50%) translateY(0) rotate(-3deg); }
+    50%{ transform:translateX(-50%) translateY(-8px) rotate(3deg); }
+  }
+
+  .croc{
+    position:absolute; bottom:-34px; font-size:1.8rem; opacity:0.9;
+    animation:crocBob 4s ease-in-out infinite; filter:drop-shadow(0 4px 3px rgba(0,0,0,0.3));
+  }
+  @keyframes crocBob{ 0%,100%{ transform:translateY(0) rotate(0deg); } 50%{ transform:translateY(-4px) rotate(-4deg); } }
+  .croc.c1{ left:14%; animation-delay:0.3s; }
+  .croc.c2{ left:38%; animation-delay:1.6s; }
+  .croc.c3{ left:63%; animation-delay:0.8s; }
+  .croc.c4{ left:85%; animation-delay:2.2s; }
+
+  .water-shimmer{
+    position:absolute; left:0; right:0; bottom:20px; height:70px;
+    background:repeating-linear-gradient(100deg, rgba(255,255,255,0.12) 0px, rgba(255,255,255,0.12) 18px, transparent 18px, transparent 36px);
+    animation:shimmerMove 6s linear infinite; border-radius:40px;
+  }
+  @keyframes shimmerMove{ 0%{ background-position-x:0; } 100%{ background-position-x:72px; } }
+
+  footer{ text-align:center; padding:20px; color:var(--cream); font-size:0.8rem; background:var(--navy); }
+
+  @media (max-width:720px){
+    .path-row{ justify-content:center; }
+    .stone-wrap{ width:110px; }
+    .stone{ width:78px; height:78px; font-size:1.2rem; }
+    .stone-wrap:nth-child(2), .stone-wrap:nth-child(3), .stone-wrap:nth-child(4), .stone-wrap:nth-child(5){ transform:none; }
+    .dashboard .progress-wrap{ display:none; }
+  }
+  @media (prefers-reduced-motion: reduce){
+    .stone, .character, .croc, .ripple-ring, .water-shimmer{ animation:none !important; }
+  }
+</style>
+</head>
+<body>
+
+  <div class="dashboard">
+    <div class="brand"><span class="logo-dot"></span>EduSlate</div>
+    <div class="progress-wrap">
+      <div class="progress-track"><div class="progress-fill" id="progressFill" style="width:0%"></div></div>
+      <span class="progress-label" id="progressLabel">0 / 5 chapters</span>
+    </div>
+    <div class="avatar-badge"><span class="emoji">🐣</span><span>Little Learner</span></div>
+  </div>
+
+  <div class="grade-tabs" id="gradeTabs"></div>
+
+  <div class="hero">
+    <h1>Cross Crocodile Lake!</h1>
+    <p>Hop from stone to stone to unlock every math chapter 🐊</p>
+  </div>
+
+  <div class="lake-scene">
+    <div class="water-shimmer"></div>
+    <div class="croc c1">🐊</div>
+    <div class="croc c2">🐊</div>
+    <div class="croc c3">🐊</div>
+    <div class="croc c4">🐊</div>
+    <div class="path-row" id="pathRow"></div>
+  </div>
+
+  <footer>Built for EduSlate • pre-primary addition adventures</footer>
+
+<script src="curriculum.js"></script>
+<script>
+  let activeGrade = getCurrentGrade();
+
+  function renderGradeTabs(){
+    const wrap = document.getElementById("gradeTabs");
+    wrap.innerHTML = "";
+    Object.keys(CURRICULUM).forEach(gradeKey => {
+      const btn = document.createElement("button");
+      btn.className = "btn ghost" + (gradeKey === activeGrade ? " active" : "");
+      btn.textContent = CURRICULUM[gradeKey].label;
+      btn.addEventListener("click", () => {
+        activeGrade = gradeKey;
+        setCurrentGrade(gradeKey);
+        renderGradeTabs();
+        renderMap();
+      });
+      wrap.appendChild(btn);
+    });
+  }
+
+  function renderMap(){
+    const chapters = CURRICULUM[activeGrade].chapters;
+    const progress = loadProgress(activeGrade);
+    const row = document.getElementById("pathRow");
+    row.innerHTML = "";
+
+    const current = chapters.find(c => progress.unlocked.includes(c.id) && !progress.completed.includes(c.id));
+
+    chapters.forEach(ch => {
+      const isUnlocked = progress.unlocked.includes(ch.id);
+      const isCompleted = progress.completed.includes(ch.id);
+      const isCurrent = current && current.id === ch.id;
+
+      const wrap = document.createElement("div");
+      wrap.className = "stone-wrap";
+
+      const stone = document.createElement("div");
+      stone.className = "stone " + (isUnlocked ? "unlocked" : "locked") + (isCurrent ? " current" : "");
+
+      if(isUnlocked){
+        stone.innerHTML = `
+          <div class="ripple-ring"></div>
+          <div class="ripple-ring delay"></div>
+          <span>${isCompleted ? "⭐" : ch.id}</span>
+        `;
+        stone.addEventListener("click", () => {
+          window.location.href = `index.html?grade=${activeGrade}&chapter=${ch.id}`;
+        });
+      }else{
+        stone.innerHTML = `<span class="lock-icon">🔒</span>`;
+      }
+
+      if(isCurrent){
+        const character = document.createElement("div");
+        character.className = "character";
+        character.textContent = "🧒";
+        stone.appendChild(character);
+      }
+
+      const label = document.createElement("div");
+      label.className = "stone-label";
+      label.textContent = ch.title + (isCompleted ? " ✓" : "");
+
+      wrap.appendChild(stone);
+      wrap.appendChild(label);
+      row.appendChild(wrap);
+    });
+
+    const pct = Math.round((progress.completed.length / chapters.length) * 100);
+    document.getElementById("progressFill").style.width = pct + "%";
+    document.getElementById("progressLabel").textContent = `${progress.completed.length} / ${chapters.length} chapters`;
+  }
+
+  renderGradeTabs();
+  renderMap();
+
+  // If returning from index.html after completing a chapter, re-render on focus
+  window.addEventListener("focus", renderMap);
+</script>
+
+</body>
+</html>
