@@ -1,0 +1,216 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>EduSlate — Who's Learning?</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@500;600;700&family=Nunito:wght@600;700;800&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --sky-top:#BFE9FF; --sky-bottom:#6FC3E8;
+    --coral:#FF6F59; --coral-dark:#E85A45; --stone-gold:#F0B94A; --stone-gold-dark:#C99229;
+    --success:#4E9F6E; --success-dark:#3C7D55; --danger:#D9534F;
+    --navy:#123847; --navy-soft:#1B4A5C; --cream:#FFF8ED;
+  }
+  *{box-sizing:border-box;}
+  body{
+    margin:0; min-height:100vh; font-family:'Nunito', sans-serif;
+    background:linear-gradient(180deg, var(--sky-top) 0%, var(--sky-bottom) 100%);
+    color:var(--navy); display:flex; flex-direction:column; align-items:center;
+    padding:48px 20px;
+  }
+  h1,h2,.display{ font-family:'Fredoka', sans-serif; }
+
+  .brand{ display:flex; align-items:center; gap:10px; font-size:1.4rem; font-weight:700; margin-bottom:6px; color:var(--navy); }
+  .brand .logo-dot{ width:16px;height:16px;border-radius:50%; background:var(--coral); box-shadow:0 0 0 5px rgba(255,111,89,0.25); }
+
+  h1{ font-size:clamp(1.7rem, 4vw, 2.4rem); margin:18px 0 4px; text-align:center; text-shadow:0 2px 0 rgba(255,255,255,0.5); }
+  p.sub{ color:var(--navy-soft); font-weight:700; margin:0 0 34px; text-align:center; }
+
+  .profile-grid{
+    display:flex; flex-wrap:wrap; gap:22px; justify-content:center; max-width:820px; margin-bottom:20px;
+  }
+
+  .profile-card{
+    display:flex; flex-direction:column; align-items:center; gap:10px; cursor:pointer;
+    background:none; border:none; color:var(--navy); font-family:'Nunito', sans-serif;
+    position:relative;
+  }
+  .profile-avatar{
+    width:110px; height:110px; border-radius:50%; display:flex; align-items:center; justify-content:center;
+    font-size:3rem; background:radial-gradient(circle at 32% 28%, #FFE6A8, var(--stone-gold) 55%, var(--stone-gold-dark));
+    border:4px solid rgba(255,255,255,0.6);
+    transition:transform 0.15s ease, box-shadow 0.15s ease;
+    box-shadow:0 8px 0 rgba(18,56,71,0.2), 0 12px 16px rgba(18,56,71,0.2);
+  }
+  .profile-card:hover .profile-avatar{
+    transform:translateY(-5px) scale(1.05);
+    box-shadow:0 12px 0 rgba(18,56,71,0.2), 0 16px 20px rgba(18,56,71,0.25);
+  }
+  .profile-name{
+    font-weight:800; font-size:0.95rem; background:rgba(255,255,255,0.7);
+    padding:4px 14px; border-radius:999px;
+  }
+
+  .delete-btn{
+    position:absolute; top:-6px; right:2px; width:26px; height:26px; border-radius:50%;
+    background:var(--danger); color:#fff; border:2px solid #fff; font-size:0.85rem; cursor:pointer;
+    display:none; align-items:center; justify-content:center; line-height:1;
+  }
+  .profile-card:hover .delete-btn{ display:flex; }
+
+  .add-card .profile-avatar{
+    border:4px dashed rgba(18,56,71,0.3); background:rgba(255,255,255,0.35); font-size:2.4rem; color:var(--navy-soft);
+    box-shadow:none;
+  }
+  .add-card:hover .profile-avatar{ border-color:var(--coral); color:var(--coral); box-shadow:none; transform:translateY(-5px) scale(1.05); }
+
+  .new-profile-form{
+    display:none; flex-direction:column; align-items:center; gap:18px;
+    background:#fff; padding:28px 30px; border-radius:22px; box-shadow:0 14px 30px rgba(18,56,71,0.25);
+    max-width:380px; width:100%; margin-top:10px;
+  }
+  .new-profile-form.active{ display:flex; }
+  .new-profile-form h2{ margin:0; font-size:1.2rem; color:var(--navy); }
+
+  .avatar-choices{ display:flex; flex-wrap:wrap; gap:10px; justify-content:center; }
+  .avatar-choice{
+    width:52px; height:52px; border-radius:50%; background:#F3F7F9; border:3px solid transparent;
+    font-size:1.6rem; cursor:pointer; display:flex; align-items:center; justify-content:center;
+    transition:border-color 0.12s ease, transform 0.12s ease;
+  }
+  .avatar-choice.selected{ border-color:var(--coral); transform:scale(1.08); background:#FFF1EE; }
+
+  input.name-input{
+    width:100%; padding:12px 16px; border-radius:999px; border:2px solid #E3EEF2; font-family:'Nunito', sans-serif;
+    font-weight:700; font-size:1rem; background:#F8FBFC; color:var(--navy);
+    outline:none;
+  }
+  input.name-input::placeholder{ color:#94AEB6; }
+  input.name-input:focus{ border-color:var(--stone-gold); }
+
+  .btn{
+    font-family:'Fredoka', sans-serif; font-weight:600; font-size:0.95rem; padding:11px 26px;
+    border-radius:999px; border:none; cursor:pointer; color:var(--cream); background:var(--coral);
+    box-shadow:0 4px 0 var(--coral-dark); transition:transform 0.12s ease, box-shadow 0.12s ease;
+  }
+  .btn:hover{ transform:translateY(-2px); box-shadow:0 6px 0 var(--coral-dark); }
+  .btn:active{ transform:translateY(2px); box-shadow:0 2px 0 var(--coral-dark); }
+  .btn:disabled{ opacity:0.5; cursor:not-allowed; transform:none; box-shadow:0 4px 0 var(--coral-dark); }
+  .btn.ghost{ background:transparent; border:2px solid rgba(18,56,71,0.25); box-shadow:none; color:var(--navy); }
+  .btn.ghost:hover{ box-shadow:none; background:rgba(18,56,71,0.06); }
+
+  .form-row{ display:flex; gap:12px; width:100%; }
+</style>
+</head>
+<body>
+
+  <div class="brand"><span class="logo-dot"></span>EduSlate</div>
+  <h1>Who's Learning Today? 🌞</h1>
+  <p class="sub">Pick your profile to jump back into Crocodile Lake 🐊</p>
+
+  <div class="profile-grid" id="profileGrid"></div>
+
+  <div class="new-profile-form" id="newProfileForm">
+    <h2>Create a new learner</h2>
+    <input type="text" class="name-input" id="nameInput" placeholder="Type a name…" maxlength="16">
+    <div class="avatar-choices" id="avatarChoices"></div>
+    <div class="form-row">
+      <button class="btn ghost" style="flex:1" onclick="hideForm()">Cancel</button>
+      <button class="btn" style="flex:1" id="saveProfileBtn" disabled onclick="saveNewProfile()">Save & Start</button>
+    </div>
+  </div>
+
+<script src="curriculum.js"></script>
+<script>
+  const AVATAR_OPTIONS = ["🦊","🐣","🐸","🦁","🐼","🐵","🦄","🐳","🐧","🐯"];
+  let selectedAvatar = null;
+
+  function renderProfiles(){
+    const grid = document.getElementById("profileGrid");
+    grid.innerHTML = "";
+    const profiles = getProfiles();
+
+    profiles.forEach(p => {
+      const card = document.createElement("button");
+      card.className = "profile-card";
+      card.innerHTML = `
+        <div class="profile-avatar">${p.avatar}</div>
+        <div class="profile-name">${p.name}</div>
+        <button class="delete-btn" title="Delete profile">✕</button>
+      `;
+      card.addEventListener("click", (e) => {
+        if(e.target.classList.contains("delete-btn")) return;
+        selectProfile(p.id);
+      });
+      card.querySelector(".delete-btn").addEventListener("click", (e) => {
+        e.stopPropagation();
+        if(confirm(`Delete ${p.name}'s profile? This won't erase their saved progress, just removes them from this list.`)){
+          deleteProfile(p.id);
+          renderProfiles();
+        }
+      });
+      grid.appendChild(card);
+    });
+
+    const addCard = document.createElement("button");
+    addCard.className = "profile-card add-card";
+    addCard.innerHTML = `<div class="profile-avatar">＋</div><div class="profile-name">Add Learner</div>`;
+    addCard.addEventListener("click", showForm);
+    grid.appendChild(addCard);
+  }
+
+  function selectProfile(id){
+    setActiveProfileId(id);
+    window.location.href = "map.html";
+  }
+
+  function showForm(){
+    document.getElementById("newProfileForm").classList.add("active");
+    document.getElementById("nameInput").focus();
+  }
+  function hideForm(){
+    document.getElementById("newProfileForm").classList.remove("active");
+    document.getElementById("nameInput").value = "";
+    selectedAvatar = null;
+    renderAvatarChoices();
+    updateSaveButton();
+  }
+
+  function renderAvatarChoices(){
+    const wrap = document.getElementById("avatarChoices");
+    wrap.innerHTML = "";
+    AVATAR_OPTIONS.forEach(av => {
+      const btn = document.createElement("button");
+      btn.className = "avatar-choice" + (av === selectedAvatar ? " selected" : "");
+      btn.textContent = av;
+      btn.addEventListener("click", () => {
+        selectedAvatar = av;
+        renderAvatarChoices();
+        updateSaveButton();
+      });
+      wrap.appendChild(btn);
+    });
+  }
+
+  function updateSaveButton(){
+    const name = document.getElementById("nameInput").value.trim();
+    document.getElementById("saveProfileBtn").disabled = !(name && selectedAvatar);
+  }
+
+  document.getElementById("nameInput").addEventListener("input", updateSaveButton);
+
+  function saveNewProfile(){
+    const name = document.getElementById("nameInput").value.trim();
+    if(!name || !selectedAvatar) return;
+    const profile = createProfile(name, selectedAvatar);
+    selectProfile(profile.id);
+  }
+
+  renderAvatarChoices();
+  renderProfiles();
+</script>
+
+</body>
+</html>
