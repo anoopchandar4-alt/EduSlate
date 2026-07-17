@@ -1,0 +1,266 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>EduSlate — Lesson Player</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@500;600;700&family=Nunito:wght@600;700;800&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --coral:#FF6F59; --coral-dark:#E85A45; --stone-gold:#F0B94A;
+    --navy:#123847; --navy-soft:#1B4A5C; --cream:#FFF8ED;
+    --sky-top:#BFE9FF; --sky-bottom:#6FC3E8; --success:#4E9F6E;
+  }
+  *{box-sizing:border-box;}
+  body{
+    margin:0; min-height:100vh; font-family:'Nunito', sans-serif;
+    background:linear-gradient(180deg, var(--sky-top), var(--sky-bottom));
+    color:var(--navy);
+  }
+  h1,h2,.display{ font-family:'Fredoka', sans-serif; }
+
+  .dashboard{
+    display:flex; align-items:center; justify-content:space-between; gap:16px;
+    padding:14px 22px; background:var(--navy); box-shadow:0 6px 20px rgba(18,56,71,0.35);
+    flex-wrap:wrap;
+  }
+  .dashboard .brand{ display:flex; align-items:center; gap:10px; color:var(--cream); font-size:1.2rem; font-weight:600; }
+  .dashboard .brand .logo-dot{ width:14px;height:14px;border-radius:50%; background:var(--coral); box-shadow:0 0 0 4px rgba(255,111,89,0.25); }
+  .chapter-tag{ color:var(--cream); font-weight:700; font-size:0.9rem; background:rgba(255,255,255,0.1); padding:6px 14px; border-radius:999px; }
+
+  #google_translate_element{ display:flex; align-items:center; }
+  #google_translate_element .goog-te-gadget{ color:var(--cream) !important; font-family:'Nunito', sans-serif !important; }
+
+  .btn{
+    font-family:'Fredoka', sans-serif; font-weight:600; font-size:0.9rem; padding:9px 20px;
+    border-radius:999px; border:none; cursor:pointer; color:var(--cream); background:var(--coral);
+    box-shadow:0 4px 0 var(--coral-dark); transition:transform 0.12s ease, box-shadow 0.12s ease;
+  }
+  .btn:hover{ transform:translateY(-2px); box-shadow:0 6px 0 var(--coral-dark); }
+  .btn:active{ transform:translateY(2px); box-shadow:0 2px 0 var(--coral-dark); }
+  .btn.secondary{ background:var(--success); box-shadow:0 4px 0 #3C7D55; }
+
+  .split{
+    display:flex; gap:16px; padding:16px; height:calc(100vh - 76px); box-sizing:border-box;
+  }
+  .panel{
+    flex:1; background:var(--navy); border-radius:18px; overflow:hidden; position:relative;
+    box-shadow:0 10px 26px rgba(18,56,71,0.25);
+  }
+  .panel-label{
+    position:absolute; top:10px; left:14px; z-index:5; color:var(--cream); font-weight:700;
+    font-size:0.75rem; background:rgba(0,0,0,0.35); padding:4px 10px; border-radius:999px;
+    letter-spacing:0.03em; text-transform:uppercase;
+  }
+
+  #player{ width:100%; height:100%; }
+  .whiteboard-frame{ width:100%; height:100%; border:none; background:#fff; }
+
+  .quiz-overlay{
+    position:absolute; inset:0; background:rgba(10,25,32,0.94);
+    display:none; flex-direction:column; align-items:center; justify-content:center;
+    padding:24px; text-align:center; z-index:10;
+  }
+  .quiz-overlay.active{ display:flex; }
+  .quiz-overlay h2{ color:var(--cream); font-size:clamp(1.3rem,3vw,1.9rem); margin:0 0 6px; }
+  .quiz-overlay .sub{ color:#B8D4DE; font-weight:700; margin-bottom:22px; }
+  .quiz-options{ display:flex; gap:14px; flex-wrap:wrap; justify-content:center; }
+  .quiz-option{
+    font-family:'Fredoka', sans-serif; font-weight:700; font-size:1.4rem; color:var(--navy);
+    background:var(--stone-gold); border:none; border-radius:16px; width:78px; height:78px;
+    cursor:pointer; box-shadow:0 5px 0 #C99229; transition:transform 0.12s ease;
+  }
+  .quiz-option:hover{ transform:translateY(-3px); }
+  .quiz-option.correct{ background:var(--success); color:#fff; box-shadow:0 5px 0 #3C7D55; }
+  .quiz-option.wrong{ background:#D9534F; color:#fff; box-shadow:0 5px 0 #A8433F; }
+  .quiz-feedback{ margin-top:18px; font-weight:800; color:var(--cream); font-size:1.05rem; min-height:1.4em; }
+  .quiz-continue{ margin-top:16px; display:none; }
+
+  @media (max-width:820px){
+    .split{ flex-direction:column; height:auto; }
+    .panel{ height:46vh; }
+  }
+</style>
+</head>
+<body>
+
+  <div class="dashboard">
+    <div class="brand"><span class="logo-dot"></span>EduSlate</div>
+    <span class="chapter-tag" id="chapterTag">Loading…</span>
+    <div id="google_translate_element"></div>
+    <button class="btn" onclick="goToMap()">← Back to Map</button>
+  </div>
+
+  <div class="split">
+    <div class="panel">
+      <span class="panel-label">Lesson Video</span>
+      <div id="player"></div>
+
+      <div class="quiz-overlay" id="quizOverlay">
+        <h2 id="quizQuestion">2 + 3 = ?</h2>
+        <p class="sub">Pick the correct answer to keep going!</p>
+        <div class="quiz-options" id="quizOptions"></div>
+        <div class="quiz-feedback" id="quizFeedback"></div>
+        <button class="btn secondary quiz-continue" id="quizContinueBtn" onclick="continueAfterQuiz()">Continue Lesson →</button>
+      </div>
+    </div>
+
+    <div class="panel">
+      <span class="panel-label">Slate (Whiteboard)</span>
+      <iframe class="whiteboard-frame" src="https://excalidraw.com" title="Collaborative whiteboard"></iframe>
+    </div>
+  </div>
+
+<script src="curriculum.js"></script>
+<script>
+  requireProfile(); // redirects to index.html if nobody's logged in
+
+  const grade = getParam("grade", getCurrentGrade());
+  const chapterId = parseInt(getParam("chapter", "1"), 10);
+  const chapter = CURRICULUM[grade].chapters.find(c => c.id === chapterId);
+
+  document.getElementById("chapterTag").textContent =
+    `${CURRICULUM[grade].label} • ${chapter ? chapter.title : "Unknown chapter"}`;
+
+  function goToMap(){ window.location.href = "map.html"; }
+
+  function speak(text){
+    if(!("speechSynthesis" in window)) return;
+    const utter = new SpeechSynthesisUtterance(text);
+    utter.rate = 0.95;
+    utter.pitch = 1.15;
+    window.speechSynthesis.cancel();
+    window.speechSynthesis.speak(utter);
+  }
+
+  function generateQuiz(){
+    const maxNum = grade === "lkg" ? 5 : 12;
+    const a = 1 + Math.floor(Math.random() * maxNum);
+    const b = 1 + Math.floor(Math.random() * maxNum);
+    const answer = a + b;
+    const options = new Set([answer]);
+    while(options.size < 3){
+      const distractor = answer + (Math.floor(Math.random() * 5) - 2);
+      if(distractor > 0) options.add(distractor);
+    }
+    return {
+      question: `${a} + ${b} = ?`,
+      options: [...options].sort(() => Math.random() - 0.5),
+      answer
+    };
+  }
+
+  let currentQuiz = null;
+
+  function showQuiz(){
+    currentQuiz = generateQuiz();
+    document.getElementById("quizQuestion").textContent = currentQuiz.question;
+    document.getElementById("quizFeedback").textContent = "";
+    document.getElementById("quizContinueBtn").style.display = "none";
+
+    const optionsWrap = document.getElementById("quizOptions");
+    optionsWrap.innerHTML = "";
+    currentQuiz.options.forEach(opt => {
+      const btn = document.createElement("button");
+      btn.className = "quiz-option";
+      btn.textContent = opt;
+      btn.addEventListener("click", () => handleQuizAnswer(opt, btn));
+      optionsWrap.appendChild(btn);
+    });
+
+    document.getElementById("quizOverlay").classList.add("active");
+    speak("Quiz time! Can you solve this?");
+  }
+
+  function handleQuizAnswer(selected, btnEl){
+    const feedback = document.getElementById("quizFeedback");
+    const allButtons = document.querySelectorAll(".quiz-option");
+    allButtons.forEach(b => b.disabled = true);
+
+    if(selected === currentQuiz.answer){
+      btnEl.classList.add("correct");
+      feedback.textContent = "Excellent job, you defeated the crocodile! 🐊";
+      speak("Excellent job, you defeated the crocodile!");
+      document.getElementById("quizContinueBtn").style.display = "inline-block";
+      completeChapter(grade, chapterId);
+    }else{
+      btnEl.classList.add("wrong");
+      feedback.textContent = "Not quite — the crocodile is still hungry! Try again.";
+      speak("Not quite, try again!");
+      setTimeout(() => {
+        allButtons.forEach(b => { b.disabled = false; b.classList.remove("wrong"); });
+        feedback.textContent = "";
+      }, 1400);
+    }
+  }
+
+  function continueAfterQuiz(){
+    document.getElementById("quizOverlay").classList.remove("active");
+    player.playVideo();
+  }
+
+  let player;
+  let checkpointFired = false;
+  let pollTimer = null;
+
+  function loadYouTubeAPI(){
+    const tag = document.createElement("script");
+    tag.src = "https://www.youtube.com/iframe_api";
+    document.body.appendChild(tag);
+  }
+
+  window.onYouTubeIframeAPIReady = function(){
+    if(!chapter || chapter.videoId === "PASTE_ID_HERE"){
+      document.getElementById("player").innerHTML =
+        `<div style="color:#fff;padding:40px;text-align:center;font-family:'Nunito',sans-serif;">
+           No video ID set yet for this chapter.<br>Add a real YouTube video ID in <code>curriculum.js</code>.
+         </div>`;
+      return;
+    }
+    player = new YT.Player("player", {
+      height: "100%",
+      width: "100%",
+      videoId: chapter.videoId,
+      playerVars: { rel: 0, modestbranding: 1 },
+      events: {
+        onReady: onPlayerReady,
+        onStateChange: onPlayerStateChange
+      }
+    });
+  };
+
+  function onPlayerReady(){
+    speak(`Hi! Let's learn ${chapter.title} together.`);
+  }
+
+  function onPlayerStateChange(event){
+    if(event.data === YT.PlayerState.PLAYING){
+      if(!pollTimer){
+        pollTimer = setInterval(() => {
+          if(!checkpointFired && player.getCurrentTime() >= chapter.checkpointSec){
+            checkpointFired = true;
+            player.pauseVideo();
+            showQuiz();
+          }
+        }, 500);
+      }
+    }
+  }
+
+  loadYouTubeAPI();
+</script>
+
+<script type="text/javascript">
+  function googleTranslateElementInit(){
+    new google.translate.TranslateElement({
+      pageLanguage: 'en',
+      includedLanguages: 'en,hi,te',
+      layout: google.translate.TranslateElement.InlineLayout.SIMPLE
+    }, 'google_translate_element');
+  }
+</script>
+<script type="text/javascript" src="https://translate.google.com/translate_a/element.js?cb=googleTranslateElementInit"></script>
+
+</body>
+</html>
